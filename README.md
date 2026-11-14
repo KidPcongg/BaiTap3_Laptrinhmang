@@ -43,7 +43,7 @@ Máy khác nối vào: dùng IP LAN của máy chạy server (`ipconfig` / `ipco
 | Người | Phần | Tiêu chí |
 |---|---|---|
 | Công | Shared, TcpServer, TestClient, tài liệu giao thức nháp | 2, 8 |
-| Tiến/Mạnh/Dũng | Dispatcher: DANGKY/DANGNHAP/LAYTHONGTIN + lớp CSDL 2.2 + PasswordHasher | 3, 4, 6, 7 |
+| Dũng | Dispatcher: DANGKY/DANGNHAP/LAYTHONGTIN + lớp CSDL 2.2 + PasswordHasher | 3, 4, 6, 7 |
 | Tiến/Mạnh/Dũng | UserMgmt.Client: ServerConnection, form Đăng nhập, Đăng ký (IP, cổng, trạng thái, validate) | 1, 3, 4 |
 | Tiến/Mạnh/Dũng | Form chính, Đăng xuất, FormClosing; hoàn thiện GiaoThuc.md; kiểm thử + báo cáo | 2a, 5 |
 
