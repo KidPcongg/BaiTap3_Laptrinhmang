@@ -7,7 +7,7 @@ UserMgmt.sln
 ├── UserMgmt.Shared/       Thư viện dùng chung: Request, Response, mã lệnh, mã lỗi, Framing (đóng khung)
 ├── UserMgmt.Server/       Server console: TcpServer (nhiều client), Dispatcher (xử lý lệnh), Logger
 ├── UserMgmt.TestClient/   Kiểm tra đường truyền: nhiều client × N chuỗi liên tiếp
-├── UserMgmt.Client/       (Tiến/Mạnh/Dũng tạo trên Windows) WinForms
+├── UserMgmt.Client/       (Tiến/Mạnh tạo trên Windows) WinForms
 └── docs/
     ├── GiaoThuc.md                 Tài liệu giao thức (nộp kèm)
     └── client-mau/ServerConnection.cs   Lớp kết nối mẫu cho client
@@ -47,14 +47,8 @@ Máy khác nối vào: dùng IP LAN của máy chạy server (`ipconfig` / `ipco
 | Tiến/Mạnh/Dũng | UserMgmt.Client: ServerConnection, form Đăng nhập, Đăng ký (IP, cổng, trạng thái, validate) | 1, 3, 4 |
 | Tiến/Mạnh/Dũng | Form chính, Đăng xuất, FormClosing; hoàn thiện GiaoThuc.md; kiểm thử + báo cáo | 2a, 5 |
 
-### Tiến/Mạnh/Dũng – việc cần làm
-1. `dotnet add UserMgmt.Server package Microsoft.Data.SqlClient`
-2. Chép lớp truy cập CSDL Bài 2.2 vào `UserMgmt.Server/Data/`, chuyển connection string vào server.
-3. Tạo `UserMgmt.Server/Security/PasswordHasher.cs` (PBKDF2 `Rfc2898DeriveBytes.Pbkdf2`, SHA256, salt 16 byte ngẫu nhiên mỗi tài khoản).
-4. Cài đặt 3 hàm `TODO` trong `Dispatcher.cs` theo đúng chú thích (truy vấn có tham số, cùng một thông báo cho sai tên/sai mật khẩu, không trả hash/salt).
-5. Không cần sửa `TcpServer.cs`.
 
-### Tiến/Mạnh/Dũng – việc cần làm
+### Tiến/Mạnh – việc cần làm
 ```powershell
 dotnet new winforms -n UserMgmt.Client -f net8.0
 dotnet sln add UserMgmt.Client
@@ -62,7 +56,7 @@ dotnet add UserMgmt.Client reference UserMgmt.Shared
 ```
 Chép `docs/client-mau/ServerConnection.cs` vào project, dựng lại 2 form của Bài 2.2, thêm ô IP, ô cổng, nhãn trạng thái. Client **không** được tham chiếu gói SQL nào.
 
-### Tiến/Mạnh/Dũng – việc cần làm
+### Tiến/Mạnh – việc cần làm
 Form chính nhận `ServerConnection` + `Dictionary<string,string>` thông tin từ form Đăng nhập. Đăng xuất và `FormClosing` gọi `LogoutAndCloseAsync()` (xem mẫu cuối file ServerConnection.cs).
 
 
