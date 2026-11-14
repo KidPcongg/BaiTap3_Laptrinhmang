@@ -7,7 +7,7 @@ UserMgmt.sln
 ├── UserMgmt.Shared/       Thư viện dùng chung: Request, Response, mã lệnh, mã lỗi, Framing (đóng khung)
 ├── UserMgmt.Server/       Server console: TcpServer (nhiều client), Dispatcher (xử lý lệnh), Logger
 ├── UserMgmt.TestClient/   Kiểm tra đường truyền: nhiều client × N chuỗi liên tiếp
-├── UserMgmt.Client/       (Người 3 tạo trên Windows) WinForms
+├── UserMgmt.Client/       (Tiến/Mạnh/Dũng tạo trên Windows) WinForms
 └── docs/
     ├── GiaoThuc.md                 Tài liệu giao thức (nộp kèm)
     └── client-mau/ServerConnection.cs   Lớp kết nối mẫu cho client
@@ -65,10 +65,4 @@ Chép `docs/client-mau/ServerConnection.cs` vào project, dựng lại 2 form c�
 ### Tiến/Mạnh/Dũng – việc cần làm
 Form chính nhận `ServerConnection` + `Dictionary<string,string>` thông tin từ form Đăng nhập. Đăng xuất và `FormClosing` gọi `LogoutAndCloseAsync()` (xem mẫu cuối file ServerConnection.cs).
 
-## Git
-```bash
-git checkout -b feature/<tên-phần>
-git add . && git commit -m "..."
-git push -u origin feature/<tên-phần>     # rồi mở Pull Request vào main
-```
-Mỗi thành viên ít nhất một commit (tiêu chí 9).
+
