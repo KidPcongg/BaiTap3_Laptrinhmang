@@ -118,25 +118,69 @@ public sealed class Dispatcher
     private static Response UserExists() => Response.Fail(ErrorCodes.UserExists, "Tên đăng nhập đã tồn tại");
 
     /// <summary>
-    /// Vào: username, password
-    /// 1. SELECT UserId, Username, PasswordHash, PasswordSalt, Email, FullName, Birthday WHERE Username = @Username
-    /// 2. Không có user HOẶC sai mật khẩu -> CÙNG MỘT câu: E_INVALID_CREDENTIALS "Tên đăng nhập hoặc mật khẩu không đúng"
-    /// 3. Đúng: session.UserId = ..., session.Username = ...; trả Data gồm userId, username, email, fullName, birthday
-    ///    KHÔNG BAO GIỜ đưa PasswordHash/PasswordSalt vào Data
+    /// DANGNHAP – Vào: username, password
+    /// 1. Lấy người dùng theo tên (truy vấn có tham số), băm lại mật khẩu với salt đã lưu rồi so sánh
+    /// 2. Sai tên HOẶC sai mật khẩu -> CÙNG MỘT mã E_INVALID_CREDENTIALS và cùng một câu thông báo
+    ///    Sai tên vẫn tốn một lần băm (VerifyDummy) để thời gian phản hồi giống hệt sai mật khẩu
+    /// 3. Đúng: gắn phiên đăng nhập vào kết nối này, trả thông tin người dùng (không có hash/salt)
     /// </summary>
-    private Task<Response> HandleDangNhapAsync(Request request, ClientSession session)
-        => Task.FromResult(NotImplemented(Commands.DangNhap));
+    private async Task<Response> HandleDangNhapAsync(Request request, ClientSession session)
+    {
+        string? username = request.Get(Fields.Username)?.Trim();
+        string? password = request.Get(Fields.Password);
+
+        if (username is null || password is null)
+            return BadRequest("Vui lòng nhập tên đăng nhập và mật khẩu");
+
+        NguoiDung? user = await _repository.FindByUsernameAsync(username);
+        bool passwordOk = user is null
+            ? PasswordHasher.VerifyDummy(password)
+            : PasswordHasher.Verify(password, user.PasswordHash, user.PasswordSalt);
+
+        if (user is null || !passwordOk)
+        {
+            // Log ghi rõ để dò lỗi, nhưng client chỉ nhận một câu chung cho cả hai trường hợp
+            Logger.Warn($"{session} đăng nhập thất bại với tên '{username}' ({(user is null ? "không có tên này" : "sai mật khẩu")})");
+            return Response.Fail(ErrorCodes.InvalidCredentials, "Tên đăng nhập hoặc mật khẩu không đúng");
+        }
+
+        session.UserId = user.UserId;
+        session.Username = user.Username;
+        Logger.Info($"{session} đăng nhập thành công");
+        return Response.Success("Đăng nhập thành công", ToResponseData(user));
+    }
 
     /// <summary>
-    /// 1. !session.IsLoggedIn -> E_NOT_LOGGED_IN
-    /// 2. SELECT ... WHERE UserId = @UserId -> trả Data như DANGNHAP
+    /// LAYTHONGTIN – không có tham số, dùng phiên đã đăng nhập trên chính kết nối này
+    /// 1. Chưa đăng nhập -> E_NOT_LOGGED_IN
+    /// 2. Đọc lại từ CSDL theo UserId để luôn trả thông tin mới nhất
     /// </summary>
-    private Task<Response> HandleLayThongTinAsync(ClientSession session)
-        => Task.FromResult(NotImplemented(Commands.LayThongTin));
-
-    private static Response NotImplemented(string cmd)
+    private async Task<Response> HandleLayThongTinAsync(ClientSession session)
     {
-        Logger.Warn($"Lệnh {cmd} chưa được cài đặt");
-        return Response.Fail(ErrorCodes.Server, "Chức năng đang được hoàn thiện");
+        if (session.UserId is not int userId)
+            return Response.Fail(ErrorCodes.NotLoggedIn, "Bạn chưa đăng nhập");
+
+        NguoiDung? user = await _repository.FindByIdAsync(userId);
+        if (user is null)
+        {
+            // Tài khoản bị xoá khỏi CSDL trong lúc đang đăng nhập
+            session.Logout();
+            return Response.Fail(ErrorCodes.NotLoggedIn, "Tài khoản không còn tồn tại, vui lòng đăng nhập lại");
+        }
+
+        return Response.Success("Lấy thông tin thành công", ToResponseData(user));
     }
+
+    /// <summary>
+    /// Thông tin gửi cho client. Chỉ chọn từng trường cần thiết,
+    /// KHÔNG BAO GIỜ đưa PasswordHash hay PasswordSalt vào đây
+    /// </summary>
+    private static Dictionary<string, string> ToResponseData(NguoiDung user) => new()
+    {
+        [Fields.UserId] = user.UserId.ToString(CultureInfo.InvariantCulture),
+        [Fields.Username] = user.Username,
+        [Fields.Email] = user.Email,
+        [Fields.FullName] = user.FullName,
+        [Fields.Birthday] = user.Birthday?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) ?? "",
+    };
 }
