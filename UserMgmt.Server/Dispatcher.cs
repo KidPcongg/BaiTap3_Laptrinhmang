@@ -1,3 +1,4 @@
+using UserMgmt.Server.Data;
 using UserMgmt.Shared;
 
 namespace UserMgmt.Server;
@@ -15,6 +16,12 @@ namespace UserMgmt.Server;
 /// </summary>
 public sealed class Dispatcher
 {
+    private readonly NguoiDungRepository _repository;
+
+    public Dispatcher(NguoiDungRepository repository)
+    {
+        _repository = repository;
+    }
     public async Task<Response> HandleAsync(Request request, ClientSession session)
     {
         try
