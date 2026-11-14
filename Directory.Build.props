@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+    <!-- Cho phép chạy app net8.0 trên runtime mới hơn (máy chỉ cài .NET 10) -->
+    <RollForward>Major</RollForward>
+  </PropertyGroup>
+</Project>
