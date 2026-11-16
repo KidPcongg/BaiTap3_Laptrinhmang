@@ -157,6 +157,8 @@ partial class TrangChinhForm
         Name = "TrangChinhForm";
         Text = "Trang chính - Quản lý người dùng";
         Font = new Font("Segoe UI", 9F);
+        AcceptButton = btnTaiLai;
+        CancelButton = btnDangXuat;
         FormClosing += TrangChinhForm_FormClosing;
         ResumeLayout(false);
         PerformLayout();

@@ -61,9 +61,9 @@ public partial class DangNhapForm : Form
         {
             ShowConnectionError("Hết thời gian chờ kết nối tới server.");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            ShowConnectionError($"Lỗi kết nối: {ex.Message}");
+            ShowConnectionError("Đã xảy ra lỗi kết nối. Vui lòng thử lại sau.");
         }
         finally
         {
@@ -127,12 +127,20 @@ public partial class DangNhapForm : Form
 
                 if (!_closing && !IsDisposed)
                 {
-                    Show();
-                    Activate();
-                    lblThongBao.ForeColor = formChinh.DialogResult == DialogResult.OK ? FormStyle.Teal : FormStyle.Error;
-                    lblThongBao.Text = formChinh.StatusMessage;
-                    txtMatKhau.Clear();
-                    txtMatKhau.Focus();
+                    if (formChinh.IsLogout)
+                    {
+                        Show();
+                        Activate();
+                        lblThongBao.ForeColor = FormStyle.Teal;
+                        lblThongBao.Text = formChinh.StatusMessage;
+                        txtMatKhau.Clear();
+                        txtMatKhau.Focus();
+                    }
+                    else
+                    {
+                        // Người dùng đóng form chính bằng nút đỏ (X) -> Thoát toàn bộ ứng dụng
+                        Close();
+                    }
                 }
             }
             else
@@ -155,9 +163,9 @@ public partial class DangNhapForm : Form
         {
             ShowConnectionError("Server không phản hồi kịp thời.");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            ShowConnectionError($"Lỗi: {ex.Message}");
+            ShowConnectionError("Đã xảy ra lỗi không xác định. Vui lòng thử lại sau.");
         }
         finally
         {
@@ -211,7 +219,9 @@ public partial class DangNhapForm : Form
     {
         _busy = busy;
         btnDangNhap.Enabled = !busy;
+        btnDangNhap.Text = busy ? "Đang xử lý..." : "Đăng nhập";
         btnKetNoi.Enabled = !busy;
+        btnKetNoi.Text = busy ? "Đang xử lý..." : "Kết nối";
         lnkDangKy.Enabled = !busy;
         txtTenDangNhap.Enabled = !busy;
         txtMatKhau.Enabled = !busy;

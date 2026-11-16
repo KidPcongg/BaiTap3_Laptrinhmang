@@ -171,9 +171,9 @@ public partial class DangKyForm : Form
         {
             ShowError("Server không phản hồi kịp thời.");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            ShowError($"Lỗi: {ex.Message}");
+            ShowError("Đã xảy ra lỗi không xác định. Vui lòng thử lại sau.");
         }
         finally
         {
@@ -208,6 +208,7 @@ public partial class DangKyForm : Form
     {
         _busy = busy;
         btnDangKy.Enabled = !busy;
+        btnDangKy.Text = busy ? "Đang xử lý..." : "Đăng ký";
         btnHuy.Enabled = !busy;
         txtTenDangNhap.Enabled = !busy;
         txtMatKhau.Enabled = !busy;

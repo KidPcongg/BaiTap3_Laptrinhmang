@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net.Sockets;
 using UserMgmt.Shared;
 
@@ -10,6 +11,7 @@ public partial class TrangChinhForm : Form
     private bool _daNgatKetNoi;
     private readonly DateTime _loginTime = DateTime.Now;
 
+    public bool IsLogout { get; private set; }
     public string StatusMessage { get; private set; } = "Đã đăng xuất";
 
     public TrangChinhForm(ServerConnection connection, Dictionary<string, string> initialData)
@@ -44,7 +46,12 @@ public partial class TrangChinhForm : Form
         lblTenDangNhapValue.Text = username;
         lblHoTenValue.Text = fullName;
         lblEmailValue.Text = string.IsNullOrWhiteSpace(email) ? "Chưa cung cấp" : email;
-        lblNgaySinhValue.Text = string.IsNullOrWhiteSpace(birthday) ? "Chưa cung cấp" : birthday;
+
+        if (DateTime.TryParseExact(birthday, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt))
+            lblNgaySinhValue.Text = dt.ToString("dd/MM/yyyy");
+        else
+            lblNgaySinhValue.Text = string.IsNullOrWhiteSpace(birthday) ? "Chưa cung cấp" : birthday;
+
         lblThoiGianDangNhapValue.Text = _loginTime.ToString("dd/MM/yyyy HH:mm:ss");
 
         lblTrangThai.Text = _connection.IsConnected ? "Đã kết nối server" : "Mất kết nối tới server";
@@ -74,13 +81,14 @@ public partial class TrangChinhForm : Form
                 {
                     MessageBox.Show(this, "Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Vui lòng đăng nhập lại.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     StatusMessage = resp.Message;
+                    IsLogout = true;
                     Close();
                 }
             }
         }
         catch (SocketException)
         {
-            ShowError("Mất kết nối tới server. Vui lòng thử lại.");
+            ShowError("Mất kết nối tới server. Vui lòng kiểm tra lại mạng.");
         }
         catch (IOException)
         {
@@ -88,11 +96,11 @@ public partial class TrangChinhForm : Form
         }
         catch (TimeoutException)
         {
-            ShowError("Server không phản hồi.");
+            ShowError("Server không phản hồi kịp thời.");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            ShowError($"Lỗi: {ex.Message}");
+            ShowError("Đã xảy ra lỗi khi tải lại dữ liệu. Vui lòng thử lại sau.");
         }
         finally
         {
@@ -106,41 +114,47 @@ public partial class TrangChinhForm : Form
         SetBusy(true);
 
         _daNgatKetNoi = true;
-        StatusMessage = "Đã đăng xuất";
+        IsLogout = true;
+        StatusMessage = "Đã đăng xuất thành công.";
         DialogResult = DialogResult.OK;
 
         try
         {
+            // Kiểu 1: Rời đàng hoàng -> Gửi DANGXUAT, nhận phản hồi rồi đóng kết nối
             await _connection.LogoutAndCloseAsync();
         }
         catch
         {
             // Bỏ qua lỗi ngắt kết nối
+        }
+        finally
+        {
+            SetBusy(false);
         }
 
         Close();
     }
 
-    private async void TrangChinhForm_FormClosing(object? sender, FormClosingEventArgs e)
+    private void TrangChinhForm_FormClosing(object? sender, FormClosingEventArgs e)
     {
         if (_daNgatKetNoi)
             return;
 
-        e.Cancel = true;
         _daNgatKetNoi = true;
+        IsLogout = false;
         StatusMessage = "Đã đóng kết nối";
-        DialogResult = DialogResult.OK;
+        DialogResult = DialogResult.Cancel;
 
         try
         {
-            await _connection.LogoutAndCloseAsync();
+            // Kiểu 2: Tắt cửa sổ bằng nút đỏ -> Đóng socket trực tiếp (Dispose/Close)
+            // Không gửi DANGXUAT để server phát hiện đóng kết nối (ReadLine trả về null)
+            _connection.Dispose();
         }
         catch
         {
             // Bỏ qua lỗi ngắt kết nối
         }
-
-        Close();
     }
 
     private void SetBusy(bool busy)
@@ -148,6 +162,8 @@ public partial class TrangChinhForm : Form
         _busy = busy;
         btnTaiLai.Enabled = !busy;
         btnDangXuat.Enabled = !busy;
+        btnTaiLai.Text = busy ? "Đang xử lý..." : "Tải lại thông tin";
+        btnDangXuat.Text = busy ? "Đang xử lý..." : "Đăng xuất";
     }
 
     private void ShowError(string message)
